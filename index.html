@@ -1,1 +1,128 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB Audio Direct Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <header class="w-full py-6 px-4 text-center border-b border-slate-800">
+        <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
+            <i class="fa-brands fa-facebook text-blue-500 mr-2"></i>FB Audio Downloader
+        </h1>
+        <p class="text-slate-400 text-sm mt-1">Download Facebook Audio & Songs directly in one click</p>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center px-4 py-8">
+        <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="urlInput" class="block text-sm font-medium text-slate-300 mb-2">Facebook Video URL</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                            <i class="fa-solid fa-link"></i>
+                        </span>
+                        <input type="text" id="urlInput" placeholder="Paste Facebook link here..." 
+                            class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all text-sm">
+                    </div>
+                </div>
+
+                <button onclick="fetchAudio()" id="downloadBtn" 
+                    class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all rounded-xl font-semibold text-white shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Get Audio Link</span>
+                </button>
+            </div>
+
+            <div id="loader" class="hidden mt-6 text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                <p class="text-slate-400 text-xs mt-2">Fetching audio link, please wait...</p>
+            </div>
+
+            <div id="errorBox" class="hidden mt-6 p-3 bg-red-950/50 border border-red-800 rounded-xl text-red-400 text-xs text-center">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="errorText">Something went wrong.</span>
+            </div>
+
+            <div id="resultBox" class="hidden mt-6 p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                <h3 id="videoTitle" class="text-sm font-semibold text-slate-200 truncate">Video Title Here</h3>
+                
+                <div class="flex flex-col gap-2">
+                    <a id="downloadLink" href="#" target="_blank" 
+                        class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 transition-all rounded-lg font-medium text-white text-center text-sm flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                        <span>Download Song (Audio)</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-900">
+        Powered by Vercel API & Tailwind CSS
+    </footer>
+
+    <script>
+        const API_URL = "https://facebook-audio-download-api.vercel.app/api/download?url=";
+
+        async function fetchAudio() {
+            const urlInput = document.getElementById('urlInput').value.trim();
+            const loader = document.getElementById('loader');
+            const errorBox = document.getElementById('errorBox');
+            const errorText = document.getElementById('errorText');
+            const resultBox = document.getElementById('resultBox');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            // Reset UI states
+            errorBox.classList.add('hidden');
+            resultBox.classList.add('hidden');
+
+            if (!urlInput) {
+                errorText.innerText = "Please paste a Facebook video link!";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            // Show Loading
+            loader.classList.remove('hidden');
+            downloadBtn.disabled = true;
+            downloadBtn.classList.add('opacity-50');
+
+            try {
+                const response = await fetch(API_URL + encodeURIComponent(urlInput));
+                const data = await response.json();
+
+                loader.classList.add('hidden');
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('opacity-50');
+
+                if (data.status && data.audio) {
+                    document.getElementById('videoTitle').innerText = data.title || "Facebook Video Audio";
+                    
+                    // Direct Download Link set කිරීම
+                    const downloadAnchor = document.getElementById('downloadLink');
+                    downloadAnchor.href = data.audio;
+                    
+                    resultBox.classList.remove('hidden');
+                } else {
+                    errorText.innerText = data.error || "Could not retrieve download link.";
+                    errorBox.classList.remove('hidden');
+                }
+
+            } catch (err) {
+                loader.classList.add('hidden');
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('opacity-50');
+                
+                errorText.innerText = "Network error or invalid server response!";
+                errorBox.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
 
