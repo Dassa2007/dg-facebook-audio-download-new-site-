@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FB Downloader - Direct Audio & Video</title>
+    <title>FB Downloader - Short & Full Links Support</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,7 +13,7 @@
         <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
             <i class="fa-brands fa-facebook text-blue-500 mr-2"></i>FB Downloader
         </h1>
-        <p class="text-slate-400 text-sm mt-1">Download Facebook Video & Audio instantly</p>
+        <p class="text-slate-400 text-sm mt-1">Supports both Short & Full Facebook Links</p>
     </header>
 
     <main class="flex-grow flex items-center justify-center px-4 py-8">
@@ -26,12 +26,12 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
                             <i class="fa-solid fa-link"></i>
                         </span>
-                        <input type="text" id="urlInput" placeholder="Paste Facebook link here..." 
+                        <input type="text" id="urlInput" placeholder="Paste short or full link here..." 
                             class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all text-sm">
                     </div>
                 </div>
 
-                <button onclick="handleDownload()" id="downloadBtn" 
+                <button onclick="processAndFetch()" id="downloadBtn" 
                     class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all rounded-xl font-semibold text-white shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-download"></i>
                     <span>Fetch Links</span>
@@ -73,7 +73,7 @@
     </footer>
 
     <script>
-        async function handleDownload() {
+        async function processAndFetch() {
             let urlInput = document.getElementById('urlInput').value.trim();
             const loader = document.getElementById('loader');
             const loaderText = document.getElementById('loaderText');
@@ -92,20 +92,23 @@
             }
 
             loader.classList.remove('hidden');
-            loaderText.innerText = "Resolving short link...";
+            loaderText.innerText = "Expanding short link...";
             downloadBtn.disabled = true;
             downloadBtn.classList.add('opacity-50');
 
-            // If it's a short link, try to unshorten it using a CORS proxy/unshorten service
+            // Short link එකක් නම් අපේ CORS proxy හරහා ඒකේ ඇතුළේ තියෙන නියම ලින්ක් එක (Redirect URL) ලබාගැනීම
             if (urlInput.includes('/share/')) {
                 try {
-                    const unshortRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlInput)}`);
-                    const unshortData = await unshortRes.json();
-                    if (unshortData && unshortData.status && unshortData.status.url) {
-                        urlInput = unshortData.status.url;
+                    const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(urlInput)}`);
+                    const htmlText = await proxyRes.text();
+                    
+                    // HTML එක ඇතුළෙන් og:url හෝ canonical ලින්ක් එක හොයාගැනීම
+                    const match = htmlText.match(/property="og:url"\s+content="([^"]+)"/) || htmlText.match(/rel="canonical"\s+href="([^"]+)"/);
+                    if (match && match[1]) {
+                        urlInput = match[1]; // දැන් මෙතනට නියම Full URL එක ලැබෙනවා
                     }
                 } catch (e) {
-                    // If proxy fails, proceed with original input
+                    console.log("Redirect extraction failed, trying direct fetch...");
                 }
             }
 
