@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FB Downloader - Video & Audio</title>
+    <title>FB Downloader - Instant Video & Audio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -31,7 +31,7 @@
                     </div>
                 </div>
 
-                <button onclick="fetchMediaFromApi()" id="downloadBtn" 
+                <button onclick="fetchDownloadLinks()" id="downloadBtn" 
                     class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all rounded-xl font-semibold text-white shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-download"></i>
                     <span>Fetch Links</span>
@@ -40,7 +40,7 @@
 
             <div id="loader" class="hidden mt-6 text-center">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                <p class="text-slate-400 text-xs mt-2">Fetching media from API...</p>
+                <p class="text-slate-400 text-xs mt-2">Fetching download links...</p>
             </div>
 
             <div id="errorBox" class="hidden mt-6 p-3 bg-red-950/50 border border-red-800 rounded-xl text-red-400 text-xs text-center">
@@ -54,7 +54,7 @@
                     <a id="videoLink" href="#" target="_blank" 
                         class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 transition-all rounded-lg font-medium text-white text-center text-sm flex items-center justify-center space-x-2 shadow-md">
                         <i class="fa-solid fa-file-video"></i>
-                        <span>Download Video (HD/SD)</span>
+                        <span>Download Video (HD / SD)</span>
                     </a>
 
                     <a id="audioLink" href="#" target="_blank" 
@@ -69,14 +69,11 @@
     </main>
 
     <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-900">
-        Powered by Custom Backend API
+        Powered by Fast Web Downloader
     </footer>
 
     <script>
-        // මෙන්න මෙතනට ඔයාගේ කලින් හැදූ API එකේ ලින්ක් එක දාන්න (අගට /?url= හෝ ?url= තියෙන්න ඕනේ)
-        const MY_API_URL = "https://your-backend-api.vercel.app/api/download?url=";
-
-        async function fetchMediaFromApi() {
+        async function fetchDownloadLinks() {
             const urlInput = document.getElementById('urlInput').value.trim();
             const loader = document.getElementById('loader');
             const errorBox = document.getElementById('errorBox');
@@ -97,34 +94,58 @@
             downloadBtn.disabled = true;
             downloadBtn.classList.add('opacity-50');
 
+            let success = false;
+
+            // 1 වන API එක උත්සාහ කිරීම (TikWM FB API)
             try {
-                const response = await fetch(MY_API_URL + encodeURIComponent(urlInput));
-                const data = await response.json();
+                const response = await fetch(`https://tikwm.com/api/other/fbdl?url=${encodeURIComponent(urlInput)}`);
+                const resData = await response.json();
 
-                loader.classList.add('hidden');
-                downloadBtn.disabled = false;
-                downloadBtn.classList.remove('opacity-50');
-
-                if (data && (data.url || data.hd || data.data)) {
-                    let mediaData = data.data || data;
-                    let finalDownloadUrl = mediaData.hd || mediaData.url || mediaData.sd;
-
-                    document.getElementById('videoTitle').innerText = mediaData.title || "Facebook Video";
+                if (resData && resData.code === 0 && resData.data) {
+                    const data = resData.data;
+                    const mediaUrl = data.hd || data.url;
                     
-                    // Video සහ Audio දෙකටම අර සර්වර් එකෙන් ලැබුණු ලින්ක් එකම පාවිච්චි කරයි
-                    document.getElementById('videoLink').href = finalDownloadUrl;
-                    document.getElementById('audioLink').href = finalDownloadUrl;
-                    
-                    resultBox.classList.remove('hidden');
-                } else {
-                    throw new Error("Invalid response from API");
+                    if (mediaUrl) {
+                        document.getElementById('videoTitle').innerText = data.title || "Facebook Video";
+                        document.getElementById('videoLink').href = mediaUrl;
+                        document.getElementById('audioLink').href = mediaUrl;
+                        success = true;
+                    }
                 }
-            } catch (err) {
-                loader.classList.add('hidden');
-                downloadBtn.disabled = false;
-                downloadBtn.classList.remove('opacity-50');
-                
-                errorText.innerText = "Could not fetch video. Please check the link or try a full URL.";
+            } catch (e) {
+                console.log("API 1 failed, trying backup...");
+            }
+
+            // 2 වන API එක උත්සාහ කිරීම (RyzenDesu API - පළමුවැන්න අසාර්ථක වුවහොත්)
+            if (!success) {
+                try {
+                    const backupRes = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(urlInput)}`);
+                    const backupData = await backupRes.json();
+
+                    if (backupData && (backupData.data || backupData.url)) {
+                        const bData = backupData.data || backupData;
+                        const finalUrl = bData.hd || bData.url || bData.sd;
+
+                        if (finalUrl) {
+                            document.getElementById('videoTitle').innerText = bData.title || "Facebook Media";
+                            document.getElementById('videoLink').href = finalUrl;
+                            document.getElementById('audioLink').href = finalUrl;
+                            success = true;
+                        }
+                    }
+                } catch (e) {
+                    console.log("API 2 failed");
+                }
+            }
+
+            loader.classList.add('hidden');
+            downloadBtn.disabled = false;
+            downloadBtn.classList.remove('opacity-50');
+
+            if (success) {
+                resultBox.classList.remove('hidden');
+            } else {
+                errorText.innerText = "Could not fetch video. Make sure the video is public.";
                 errorBox.classList.remove('hidden');
             }
         }
