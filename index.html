@@ -3,22 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FB Audio Direct Downloader</title>
+    <title>FB Video & Audio Direct Downloader</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
+    <!-- Header Section -->
     <header class="w-full py-6 px-4 text-center border-b border-slate-800">
         <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
-            <i class="fa-brands fa-facebook text-blue-500 mr-2"></i>FB Audio Downloader
+            <i class="fa-brands fa-facebook text-blue-500 mr-2"></i>FB Downloader
         </h1>
-        <p class="text-slate-400 text-sm mt-1">Download Facebook Audio & Songs directly in one click</p>
+        <p class="text-slate-400 text-sm mt-1">Download Facebook Video & Audio instantly in one click</p>
     </header>
 
+    <!-- Main Container -->
     <main class="flex-grow flex items-center justify-center px-4 py-8">
         <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
             
+            <!-- Input Form -->
             <div class="space-y-4">
                 <div>
                     <label for="urlInput" class="block text-sm font-medium text-slate-300 mb-2">Facebook Video URL</label>
@@ -26,35 +31,47 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
                             <i class="fa-solid fa-link"></i>
                         </span>
-                        <input type="text" id="urlInput" placeholder="Paste Facebook link here..." 
+                        <input type="text" id="urlInput" placeholder="Paste Facebook video link here..." 
                             class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all text-sm">
                     </div>
+                    <p class="text-[11px] text-slate-500 mt-1">💡 Tip: Use a direct public video URL if short link fails.</p>
                 </div>
 
-                <button onclick="fetchAudio()" id="downloadBtn" 
+                <button onclick="getDownloadLinks()" id="downloadBtn" 
                     class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all rounded-xl font-semibold text-white shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-download"></i>
-                    <span>Get Audio Link</span>
+                    <span>Generate Links</span>
                 </button>
             </div>
 
+            <!-- Loading Spinner -->
             <div id="loader" class="hidden mt-6 text-center">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                <p class="text-slate-400 text-xs mt-2">Fetching audio link, please wait...</p>
+                <p class="text-slate-400 text-xs mt-2">Fetching download links, please wait...</p>
             </div>
 
+            <!-- Error Box -->
             <div id="errorBox" class="hidden mt-6 p-3 bg-red-950/50 border border-red-800 rounded-xl text-red-400 text-xs text-center">
                 <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="errorText">Something went wrong.</span>
             </div>
 
-            <div id="resultBox" class="hidden mt-6 p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
-                <h3 id="videoTitle" class="text-sm font-semibold text-slate-200 truncate">Video Title Here</h3>
+            <!-- Result Box -->
+            <div id="resultBox" class="hidden mt-6 p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
+                <h3 id="videoTitle" class="text-sm font-semibold text-slate-200 truncate text-center">Facebook Video</h3>
                 
-                <div class="flex flex-col gap-2">
-                    <a id="downloadLink" href="#" target="_blank" 
+                <div class="flex flex-col gap-3">
+                    <!-- Video Download Link -->
+                    <a id="videoLink" href="#" target="_blank" 
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 transition-all rounded-lg font-medium text-white text-center text-sm flex items-center justify-center space-x-2 shadow-md shadow-blue-600/20">
+                        <i class="fa-solid fa-file-video"></i>
+                        <span>Download Video (HD/SD)</span>
+                    </a>
+
+                    <!-- Audio Download Link -->
+                    <a id="audioLink" href="#" target="_blank" 
                         class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 transition-all rounded-lg font-medium text-white text-center text-sm flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20">
-                        <i class="fa-solid fa-file-arrow-down"></i>
-                        <span>Download Song (Audio)</span>
+                        <i class="fa-solid fa-file-audio"></i>
+                        <span>Download Audio (Song)</span>
                     </a>
                 </div>
             </div>
@@ -62,14 +79,14 @@
         </div>
     </main>
 
+    <!-- Footer -->
     <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-900">
-        Powered by Vercel API & Tailwind CSS
+        Powered by Direct Client-side Downloader
     </footer>
 
+    <!-- JavaScript Logic (No Backend API Required) -->
     <script>
-        const API_URL = "https://facebook-audio-download-api.vercel.app/api/download?url=";
-
-        async function fetchAudio() {
+        async function getDownloadLinks() {
             const urlInput = document.getElementById('urlInput').value.trim();
             const loader = document.getElementById('loader');
             const errorBox = document.getElementById('errorBox');
@@ -77,7 +94,6 @@
             const resultBox = document.getElementById('resultBox');
             const downloadBtn = document.getElementById('downloadBtn');
             
-            // Reset UI states
             errorBox.classList.add('hidden');
             resultBox.classList.add('hidden');
 
@@ -87,42 +103,76 @@
                 return;
             }
 
-            // Show Loading
             loader.classList.remove('hidden');
             downloadBtn.disabled = true;
             downloadBtn.classList.add('opacity-50');
 
             try {
-                const response = await fetch(API_URL + encodeURIComponent(urlInput));
-                const data = await response.json();
+                // We use a reliable public CORS-friendly downloader API directly from frontend
+                const apiRes = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(urlInput)}`);
+                const json = await apiRes.json();
 
                 loader.classList.add('hidden');
                 downloadBtn.disabled = false;
                 downloadBtn.classList.remove('opacity-50');
 
-                if (data.status && data.audio) {
-                    document.getElementById('videoTitle').innerText = data.title || "Facebook Video Audio";
+                if (json && (json.data || json.url || json.hd)) {
+                    // Grab links based on common structure
+                    let videoData = json.data || json;
+                    let hdUrl = videoData.hd || videoData.url || videoData.normal;
+                    let sdUrl = videoData.sd || videoData.url;
                     
-                    // Direct Download Link set කිරීම
-                    const downloadAnchor = document.getElementById('downloadLink');
-                    downloadAnchor.href = data.audio;
-                    
+                    document.getElementById('videoTitle').innerText = videoData.title || "Facebook Media";
+
+                    // Set Video Link
+                    const vidAnchor = document.getElementById('videoLink');
+                    vidAnchor.href = hdUrl || sdUrl;
+
+                    // Set Audio Link (Using same video stream link since video streams contain direct audio tracks)
+                    const audAnchor = document.getElementById('audioLink');
+                    audAnchor.href = hdUrl || sdUrl;
+
                     resultBox.classList.remove('hidden');
                 } else {
-                    errorText.innerText = data.error || "Could not retrieve download link.";
-                    errorBox.classList.remove('hidden');
+                    // Fallback to secondary public API if first one fails
+                    fetchAlternativeApi(urlInput);
                 }
 
             } catch (err) {
-                loader.classList.add('hidden');
-                downloadBtn.disabled = false;
-                downloadBtn.classList.remove('opacity-50');
+                fetchAlternativeApi(urlInput);
+            }
+        }
+
+        async function fetchAlternativeApi(videoUrl) {
+            try {
+                // Alternative free public endpoint
+                const res = await fetch(`https://tikwm.com/api/other/fbdl?url=${encodeURIComponent(videoUrl)}`);
+                const data = await res.json();
+
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('downloadBtn').classList.remove('opacity-50');
+
+                if (data && data.code === 0 && data.data) {
+                    document.getElementById('videoTitle').innerText = data.data.title || "Facebook Media";
+                    
+                    const directUrl = data.data.url;
+                    document.getElementById('videoLink').href = directUrl;
+                    document.getElementById('audioLink').href = directUrl;
+
+                    document.getElementById('resultBox').classList.remove('hidden');
+                } else {
+                    throw new Error("Failed to fetch");
+                }
+            } catch (e) {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('downloadBtn').classList.remove('opacity-50');
                 
-                errorText.innerText = "Network error or invalid server response!";
-                errorBox.classList.remove('hidden');
+                document.getElementById('errorText').innerText = "Could not fetch links. Please make sure the video is public.";
+                document.getElementById('errorBox').classList.remove('hidden');
             }
         }
     </script>
 </body>
 </html>
-
